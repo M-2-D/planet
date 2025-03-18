@@ -30,6 +30,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  http: ^1.3.0  # Pour faire des requêtes API
+  provider: ^6.1.2  # Pour gérer l’état de l’application
+  shared_preferences: ^2.3.1  # Pour stocker les données localement (ex: token de connexion)
+  flutter_secure_storage: ^9.2.4
 
 
   # The following adds the Cupertino Icons font to your application.
