@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
+import 'package:planet/views/dashboard.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
-
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -11,9 +11,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController ienController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  bool isLoading = false; // Gestion du chargement
+  bool isLoading = false;
 
-  // Fonction de connexion
   Future<void> _login() async {
     setState(() => isLoading = true);
 
@@ -25,8 +24,9 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = false);
 
     if (response != null) {
-      // Redirection après succès
-      Navigator.pushReplacementNamed(context, "/home");
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => DashboardScreen()),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Échec de l'authentification")),
@@ -42,7 +42,6 @@ class _LoginPageState extends State<LoginPage> {
       body: Stack(
         children: [
           // Partie blanche (Formulaire)
-          //const SizedBox(height: 15),
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -57,7 +56,6 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 5),
-
                   // Champ IEN
                   TextField(
                     controller: ienController,
@@ -72,7 +70,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 30),
-
                   // Champ Code Temporaire
                   TextField(
                     controller: passwordController,
@@ -93,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
                     width: MediaQuery.of(context).size.width * 0.6,
                     height: 45,
                     child: ElevatedButton(
-                      onPressed: isLoading ? null : _login, // Désactive pendant le chargement
+                      onPressed: isLoading ? null : _login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4666DB),
                         shape: RoundedRectangleBorder(
@@ -117,19 +114,17 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // Texte en haut (Planète Élève)
+
           Positioned(
-            top: MediaQuery.of(context).size.height * 0.2,
+            top: MediaQuery.of(context).size.height * 0.1,
             left: 0,
             right: 0,
-            child: const Center(
-              child: Text(
-                "PLANETE ELEVE",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+            child: Center(
+              child: Image.asset(
+                'assets/planet.png',
+                height: 150,
+                width: 200,
+                fit: BoxFit.contain,
               ),
             ),
           ),
