@@ -75,7 +75,7 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ INITIALISATION IMPORTANTE
+    // INITIALISATION IMPORTANTE
     ScreenUtil.init(context, designSize: Size(393, 851));
 
     return Scaffold(
@@ -105,7 +105,7 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
         ),
         child: Image.asset(
           'assets/logo_white_eleve.png',
-          height: 32.h, // ✅ CORRIGÉ
+          height: 32.h,
           fit: BoxFit.contain,
         ),
       ),
@@ -114,7 +114,7 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
         IconButton(
           icon: Icon(Icons.notifications_outlined,
               color: Colors.white,
-              size: 24.sp), // ✅ CORRIGÉ
+              size: 24.sp),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Notifications')),
@@ -135,7 +135,7 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
         children: [
           _buildSchoolHeader(),
           _buildStudentInfo(),
-          SizedBox(height: 8.h), // ✅ CORRIGÉ
+          SizedBox(height: 8.h),
           _buildSemesterHeader(),
           _buildDisciplinesList(),
         ],
@@ -146,12 +146,12 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
   Widget _buildSchoolHeader() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 8.h), // ✅ CORRIGÉ
+      padding: EdgeInsets.symmetric(vertical: 8.h),
       color: Colors.white,
       child: Text(
         'ETABLISSEMENT SIMEN FORMATION (2024-2025)',
         style: TextStyle(
-          fontSize: 12.sp, // ✅ CORRIGÉ
+          fontSize: 12.sp,
           fontWeight: FontWeight.w500,
           color: textMedium,
         ),
@@ -162,16 +162,16 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
 
   Widget _buildStudentInfo() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h), // ✅ CORRIGÉ
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       color: Colors.white,
       child: Row(
         children: [
           CircleAvatar(
             backgroundColor: amberColor.withOpacity(0.2),
-            radius: 18.r, // ✅ CORRIGÉ
-            child: Icon(Icons.person, color: amberColor, size: 22.sp), // ✅ CORRIGÉ
+            radius: 18.r,
+            child: Icon(Icons.person, color: amberColor, size: 22.sp),
           ),
-          SizedBox(width: 10.w), // ✅ CORRIGÉ
+          SizedBox(width: 10.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,24 +182,24 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
                       '${userInfo["prenom"] ??""} ${userInfo["nom"] ?? ""}',
                       style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15.sp, color: textDark), // ✅ CORRIGÉ
                     ),
-                    SizedBox(width: 4.w), // ✅ CORRIGÉ
+                    SizedBox(width: 4.w),
                     Icon(Icons.chevron_right,
-                        size: 18.sp, // ✅ CORRIGÉ
+                        size: 18.sp,
                         color: textMedium
                     ),
-                    SizedBox(width: 4.w), // ✅ CORRIGÉ
+                    SizedBox(width: 4.w),
                     Text(
                       '${userInfo["classe"] ?? "Classe ?"}',
                       style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15.sp, color: textDark), // ✅ CORRIGÉ
                     ),
                   ],
                 ),
-                SizedBox(height: 2.h), // ✅ CORRIGÉ
+                SizedBox(height: 2.h),
                 Text(
                   '${userInfo["ien"] ?? ""}',
                   style: TextStyle(
                     color: textMedium,
-                    fontSize: 13.sp, // ✅ CORRIGÉ
+                    fontSize: 13.sp,
                   ),
                 ),
               ],
@@ -213,21 +213,21 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
   Widget _buildSemesterHeader() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 12.h), // ✅ CORRIGÉ
+      padding: EdgeInsets.symmetric(vertical: 12.h),
       color: Colors.white,
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.assessment, color: primaryColor, size: 20.sp), // ✅ CORRIGÉ
-              SizedBox(width: 8.w), // ✅ CORRIGÉ
+              Icon(Icons.assessment, color: primaryColor, size: 20.sp),
+              SizedBox(width: 8.w),
               Text(
                 'EVALUATIONS PAR DISCIPLINES',
                 style: TextStyle(
                   color: primaryColor,
                   fontWeight: FontWeight.bold,
-                  fontSize: 15.sp, // ✅ CORRIGÉ
+                  fontSize: 15.sp,
                 ),
               ),
             ],
@@ -240,30 +240,30 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
   Widget _buildDisciplinesList() {
     if (disciplines.isEmpty) {
       return Container(
-        margin: EdgeInsets.all(16.w), // ✅ CORRIGÉ
-        padding: EdgeInsets.all(14.w), // ✅ CORRIGÉ
+        margin: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(14.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8.r), // ✅ CORRIGÉ
+          borderRadius: BorderRadius.circular(8.r),
         ),
         child: Text(
           'Aucune discipline disponible pour ce semestre',
-          style: TextStyle(color: textMedium, fontSize: 14.sp), // ✅ CORRIGÉ
+          style: TextStyle(color: textMedium, fontSize: 14.sp),
           textAlign: TextAlign.center,
         ),
       );
     }
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h), // ✅ CORRIGÉ
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8.r), // ✅ CORRIGÉ
+        borderRadius: BorderRadius.circular(8.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 6.w, // ✅ CORRIGÉ
-            offset: Offset(0, 2.h), // ✅ CORRIGÉ
+            blurRadius: 6.w,
+            offset: Offset(0, 2.h),
           ),
         ],
       ),
@@ -288,7 +288,7 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
               );
             },
             child: Container(
-              padding: EdgeInsets.all(14.w), // ✅ CORRIGÉ
+              padding: EdgeInsets.all(14.w),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
@@ -301,26 +301,26 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
               child: Row(
                 children: [
                   Container(
-                    width: 36.w, // ✅ CORRIGÉ
-                    height: 36.h, // ✅ CORRIGÉ
+                    width: 36.w,
+                    height: 36.h,
                     decoration: BoxDecoration(
                       color: primaryColor.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.school, color: blueColor, size: 20.sp), // ✅ CORRIGÉ
+                    child: Icon(Icons.school, color: blueColor, size: 20.sp),
                   ),
-                  SizedBox(width: 10.w), // ✅ CORRIGÉ
+                  SizedBox(width: 10.w),
                   Expanded(
                     child: Text(
                       displayName,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: textDark,
-                        fontSize: 15.sp, // ✅ CORRIGÉ
+                        fontSize: 15.sp,
                       ),
                     ),
                   ),
-                  Icon(Icons.chevron_right, color: blueColor, size: 22.sp), // ✅ CORRIGÉ
+                  Icon(Icons.chevron_right, color: blueColor, size: 22.sp),
                 ],
               ),
             ),
@@ -335,14 +335,14 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
       decoration: BoxDecoration(
         color: primaryColor,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20.r), // ✅ CORRIGÉ
-          topRight: Radius.circular(20.r), // ✅ CORRIGÉ
+          topLeft: Radius.circular(20.r),
+          topRight: Radius.circular(20.r),
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 10.w, // ✅ CORRIGÉ
-            offset: Offset(0, -2.h), // ✅ CORRIGÉ
+            blurRadius: 10.w,
+            offset: Offset(0, -2.h),
           ),
         ],
       ),
