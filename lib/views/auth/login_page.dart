@@ -121,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
             right: 0,
             child: Center(
               child: Image.asset(
-                'assets/planet.png',
+                'assets/logo_white_eleve.png',
                 height: 150,
                 width: 200,
                 fit: BoxFit.contain,

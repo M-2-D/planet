@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../services/api_service.dart';
 import '../../views/dashboard.dart';
 import '../../views/menu_drawer.dart';
@@ -18,7 +19,6 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
   List<dynamic> disciplines = [];
   bool isLoading = true;
   Map<String, dynamic> userInfo = {};
-
 
   final Color primaryColor = Color(0xFF4666DB);
   final Color amberColor = Color(0xFFFFC107);
@@ -55,25 +55,29 @@ class _DisciplineListPageState extends State<DisciplineListPage> {
       );
     }
   }
-String _formatDisciplineName(String rawName) {
-  final acronyms = ['SVT', 'PC', 'HG', 'EPS'];
-  final upperName = rawName.toUpperCase();
 
-  if (acronyms.any((acronym) => upperName == acronym)) {
-    return upperName;
+  String _formatDisciplineName(String rawName) {
+    final acronyms = ['SVT', 'PC', 'HG', 'EPS'];
+    final upperName = rawName.toUpperCase();
+
+    if (acronyms.any((acronym) => upperName == acronym)) {
+      return upperName;
+    }
+
+    return rawName
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((word) => word.isNotEmpty
+        ? word[0].toUpperCase() + word.substring(1).toLowerCase()
+        : '')
+        .join(' ');
   }
-
-  return rawName
-      .replaceAll('_', ' ')
-      .split(' ')
-      .map((word) => word.isNotEmpty
-      ? word[0].toUpperCase() + word.substring(1).toLowerCase()
-      : '')
-      .join(' ');
-}
 
   @override
   Widget build(BuildContext context) {
+    // ✅ INITIALISATION IMPORTANTE
+    ScreenUtil.init(context, designSize: Size(393, 851));
+
     return Scaffold(
       backgroundColor: backgroundColor,
       drawer: MenuDrawer(primaryColor: primaryColor),
@@ -88,18 +92,34 @@ String _formatDisciplineName(String rawName) {
       backgroundColor: primaryColor,
       elevation: 0,
       automaticallyImplyLeading: false,
-      title: Image.asset(
-        'assets/planet.png',
-        height: 40,
-        fit: BoxFit.contain,
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: Icon(Icons.menu, color: Colors.white),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
       ),
-      //centerTitle: true,
+      title: ColorFiltered(
+        colorFilter: ColorFilter.mode(
+          Colors.white.withOpacity(0.8),
+          BlendMode.modulate,
+        ),
+        child: Image.asset(
+          'assets/logo_white_eleve.png',
+          height: 32.h, // ✅ CORRIGÉ
+          fit: BoxFit.contain,
+        ),
+      ),
+      centerTitle: true,
       actions: [
-        Builder(
-          builder: (context) => IconButton(
-            icon: Icon(Icons.menu, color: Colors.white),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
+        IconButton(
+          icon: Icon(Icons.notifications_outlined,
+              color: Colors.white,
+              size: 24.sp), // ✅ CORRIGÉ
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Notifications')),
+            );
+          },
         ),
       ],
     );
@@ -115,6 +135,7 @@ String _formatDisciplineName(String rawName) {
         children: [
           _buildSchoolHeader(),
           _buildStudentInfo(),
+          SizedBox(height: 8.h), // ✅ CORRIGÉ
           _buildSemesterHeader(),
           _buildDisciplinesList(),
         ],
@@ -125,12 +146,12 @@ String _formatDisciplineName(String rawName) {
   Widget _buildSchoolHeader() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 12),
+      padding: EdgeInsets.symmetric(vertical: 8.h), // ✅ CORRIGÉ
       color: Colors.white,
       child: Text(
         'ETABLISSEMENT SIMEN FORMATION (2024-2025)',
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 12.sp, // ✅ CORRIGÉ
           fontWeight: FontWeight.w500,
           color: textMedium,
         ),
@@ -141,33 +162,44 @@ String _formatDisciplineName(String rawName) {
 
   Widget _buildStudentInfo() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h), // ✅ CORRIGÉ
       color: Colors.white,
       child: Row(
         children: [
           CircleAvatar(
             backgroundColor: amberColor.withOpacity(0.2),
-            radius: 20,
-            child: Icon(Icons.person, color: amberColor, size: 24),
+            radius: 18.r, // ✅ CORRIGÉ
+            child: Icon(Icons.person, color: amberColor, size: 22.sp), // ✅ CORRIGÉ
           ),
-          SizedBox(width: 12),
+          SizedBox(width: 10.w), // ✅ CORRIGÉ
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${userInfo["prenom"] ?? ""} ${userInfo["nom"] ?? ""} / ${userInfo["classe"] ?? "Classe ?"}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: textDark,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      '${userInfo["prenom"] ??""} ${userInfo["nom"] ?? ""}',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15.sp, color: textDark), // ✅ CORRIGÉ
+                    ),
+                    SizedBox(width: 4.w), // ✅ CORRIGÉ
+                    Icon(Icons.chevron_right,
+                        size: 18.sp, // ✅ CORRIGÉ
+                        color: textMedium
+                    ),
+                    SizedBox(width: 4.w), // ✅ CORRIGÉ
+                    Text(
+                      '${userInfo["classe"] ?? "Classe ?"}',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15.sp, color: textDark), // ✅ CORRIGÉ
+                    ),
+                  ],
                 ),
+                SizedBox(height: 2.h), // ✅ CORRIGÉ
                 Text(
                   '${userInfo["ien"] ?? ""}',
                   style: TextStyle(
                     color: textMedium,
-                    fontSize: 14,
+                    fontSize: 13.sp, // ✅ CORRIGÉ
                   ),
                 ),
               ],
@@ -181,27 +213,25 @@ String _formatDisciplineName(String rawName) {
   Widget _buildSemesterHeader() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 16),
-      margin: EdgeInsets.only(top: 8),
+      padding: EdgeInsets.symmetric(vertical: 12.h), // ✅ CORRIGÉ
       color: Colors.white,
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.assessment, color: primaryColor, size: 20),
-              SizedBox(width: 8),
+              Icon(Icons.assessment, color: primaryColor, size: 20.sp), // ✅ CORRIGÉ
+              SizedBox(width: 8.w), // ✅ CORRIGÉ
               Text(
-                'LISTE DES DISCIPLINES',
+                'EVALUATIONS PAR DISCIPLINES',
                 style: TextStyle(
                   color: primaryColor,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 15.sp, // ✅ CORRIGÉ
                 ),
               ),
             ],
           ),
-
         ],
       ),
     );
@@ -210,30 +240,30 @@ String _formatDisciplineName(String rawName) {
   Widget _buildDisciplinesList() {
     if (disciplines.isEmpty) {
       return Container(
-        margin: EdgeInsets.all(16),
-        padding: EdgeInsets.all(16),
+        margin: EdgeInsets.all(16.w), // ✅ CORRIGÉ
+        padding: EdgeInsets.all(14.w), // ✅ CORRIGÉ
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8.r), // ✅ CORRIGÉ
         ),
         child: Text(
           'Aucune discipline disponible pour ce semestre',
-          style: TextStyle(color: textMedium),
+          style: TextStyle(color: textMedium, fontSize: 14.sp), // ✅ CORRIGÉ
           textAlign: TextAlign.center,
         ),
       );
     }
 
     return Container(
-      margin: EdgeInsets.all(16),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h), // ✅ CORRIGÉ
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r), // ✅ CORRIGÉ
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: Offset(0, 2),
+            blurRadius: 6.w, // ✅ CORRIGÉ
+            offset: Offset(0, 2.h), // ✅ CORRIGÉ
           ),
         ],
       ),
@@ -258,7 +288,7 @@ String _formatDisciplineName(String rawName) {
               );
             },
             child: Container(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.all(14.w), // ✅ CORRIGÉ
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
@@ -271,26 +301,26 @@ String _formatDisciplineName(String rawName) {
               child: Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 36.w, // ✅ CORRIGÉ
+                    height: 36.h, // ✅ CORRIGÉ
                     decoration: BoxDecoration(
                       color: primaryColor.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.school, color: blueColor),
+                    child: Icon(Icons.school, color: blueColor, size: 20.sp), // ✅ CORRIGÉ
                   ),
-                  SizedBox(width: 12),
+                  SizedBox(width: 10.w), // ✅ CORRIGÉ
                   Expanded(
                     child: Text(
                       displayName,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: textDark,
-                        fontSize: 16,
+                        fontSize: 15.sp, // ✅ CORRIGÉ
                       ),
                     ),
                   ),
-                  Icon(Icons.chevron_right, color: blueColor),
+                  Icon(Icons.chevron_right, color: blueColor, size: 22.sp), // ✅ CORRIGÉ
                 ],
               ),
             ),
@@ -305,14 +335,14 @@ String _formatDisciplineName(String rawName) {
       decoration: BoxDecoration(
         color: primaryColor,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(20.r), // ✅ CORRIGÉ
+          topRight: Radius.circular(20.r), // ✅ CORRIGÉ
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, -2),
+            blurRadius: 10.w, // ✅ CORRIGÉ
+            offset: Offset(0, -2.h), // ✅ CORRIGÉ
           ),
         ],
       ),

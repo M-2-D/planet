@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
+
 
 class ApiService {
   //static const String baseUrl = "http://localhost:8000/api";
-  static const String baseUrl = "http://10.0.2.2:8000/api";
+ static const String baseUrl = "http://10.0.2.2:8000/api";
 
   static Future<Map<String, dynamic>?> login(String ien, String password) async {
     try {
@@ -66,8 +66,8 @@ class ApiService {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return {
       "ien": prefs.getString("ien"),
-      "nom": prefs.getString("nom"),
       "prenom": prefs.getString("prenom"),
+      "nom": prefs.getString("nom"),
       "classe":prefs.getString("classe")
 
     };

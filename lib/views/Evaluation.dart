@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
 
 class EvaluationsPage extends StatefulWidget {
@@ -16,17 +17,9 @@ class EvaluationsPage extends StatefulWidget {
 }
 
 class _EvaluationsPageState extends State<EvaluationsPage> {
-  List<dynamic> evaluations = [];
+  List<Map<String, dynamic>> evaluations = [];
   bool isLoading = true;
-
-
-  final Color primaryColor = Color(0xFF4666DB);
-  final Color amberColor = Color(0xFFFFC107);
-  final Color blueColor = Color(0xFF2599FB);
-  final Color petroleBlue = Color(0xFF006699);
-  final Color textDark = Color(0xFF333333);
-  final Color textMedium = Color(0xFF666666);
-  final Color backgroundColor = Color(0xFFF5F5F5);
+  String? errorMessage;
 
   @override
   void initState() {
@@ -35,162 +28,410 @@ class _EvaluationsPageState extends State<EvaluationsPage> {
   }
 
   Future<void> _loadEvaluations() async {
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
     try {
-      final data = await ApiService.getEvaluations(widget.ien);
+      final result = await ApiService.getEvaluations(widget.ien);
+      final List<Map<String, dynamic>> filteredEvaluations = _extractAndFilterEvaluations(result);
+
       setState(() {
-        evaluations = data;
+        evaluations = filteredEvaluations;
         isLoading = false;
       });
     } catch (e) {
-      setState(() => isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${e.toString()}')),
-      );
+      setState(() {
+        isLoading = false;
+        errorMessage = e.toString();
+        evaluations = [];
+      });
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: Text(widget.disciplineName.toUpperCase()),
-        backgroundColor: primaryColor,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : _buildEvaluationsContent(),
-    );
+  List<Map<String, dynamic>> _extractAndFilterEvaluations(dynamic apiResult) {
+    if (apiResult == null) {
+      throw Exception("Aucune donnée reçue depuis l'API");
+    }
+
+    List<dynamic> rawEvaluations = [];
+
+    // Extraire les évaluations selon le format reçu
+    if (apiResult is Map<String, dynamic>) {
+      if (apiResult.containsKey('evaluations') && apiResult['evaluations'] is List) {
+        rawEvaluations = apiResult['evaluations'];
+      } else {
+        throw Exception("Format de réponse API invalide : clé 'evaluations' manquante ou incorrecte");
+      }
+    } else if (apiResult is List) {
+      rawEvaluations = apiResult;
+    } else {
+      throw Exception("Format de réponse API non supporté");
+    }
+
+    // Filtrer et convertir les évaluations
+    List<Map<String, dynamic>> validEvaluations = [];
+
+    for (var eval in rawEvaluations) {
+      if (eval is Map<String, dynamic>) {
+        // Vérifier si l'évaluation correspond à la matière demandée
+        String? matiere = eval['matiere']?.toString();
+        if (matiere != null &&
+            matiere.toLowerCase().trim() == widget.disciplineName.toLowerCase().trim()) {
+          validEvaluations.add(eval);
+        }
+      }
+    }
+
+    return validEvaluations;
   }
 
-  Widget _buildEvaluationsContent() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: primaryColor.withOpacity(0.3),
-                  width: 1.0,
-                ),
-              ),
-            ),
-            child: Text(
-              'PREMIER SEMESTRE',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: primaryColor,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
+  String _formatDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) {
+      return "Date inconnue";
+    }
 
-          SizedBox(height: 20),
+    try {
+      final date = DateTime.parse(dateString);
+      return DateFormat('dd/MM/yyyy').format(date);
+    } catch (e) {
+      return "Date invalide";
+    }
+  }
 
-          if (evaluations.isEmpty)
-            Center(
-              child: Text(
-                'Aucune évaluation disponible',
-                style: TextStyle(color: textMedium),
-              ),
-            )
-          else
-            ...evaluations.map((evaluation) =>
-                _buildEvaluationCard(evaluation)
-            ).toList(),
+  Widget _buildNoteWidget(dynamic note) {
+    String noteText;
+    Color backgroundColor;
+    Color textColor;
 
-          // Section Salle
-          Padding(
-            padding: EdgeInsets.only(top: 20),
-            child: Text(
-              'Salle 2',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: textDark,
-              ),
-            ),
-          ),
-        ],
+    if (note == null || note.toString().isEmpty || note == "Aucune note disponible") {
+      noteText = "Aucune note disponible";
+      backgroundColor = Colors.orange.shade100;
+      textColor = Colors.orange.shade800;
+    } else {
+      noteText = "Note : $note/20";
+      backgroundColor = Colors.green.shade100;
+      textColor = Colors.green.shade800;
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        noteText,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
 
   Widget _buildEvaluationCard(Map<String, dynamic> evaluation) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (evaluations.indexOf(evaluation) != 0)
-          Divider(height: 30, thickness: 1, color: Colors.grey[300]),
+    final String type = evaluation['nom']?.toString() ?? "Évaluation non définie";
+    final String date = _formatDate(evaluation['date']?.toString());
+    final String heure = evaluation['heure']?.toString() ?? "Heure inconnue";
 
-
-        Text(
-          evaluation['nom']?.toUpperCase() ?? 'ÉVALUATION',
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: EdgeInsets.symmetric(vertical: 8),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        leading: const Icon(
+          Icons.assignment,
+          color: Color(0xFF4666DB),
+          size: 28,
+        ),
+        title: Text(
+          type,
           style: TextStyle(
-            fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: primaryColor,
+            fontSize: 16,
           ),
         ),
-
-        SizedBox(height: 8),
-
-
-        if (evaluation['note'] != null && evaluation['note'] != "Aucune note disponible")
-          Text(
-            'NOTE: ${evaluation['note']}',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.green[700],
-            ),
-          )
-        else
-          Text(
-            'AUCUNE NOTE DISPONIBLE',
-            style: TextStyle(
-              fontSize: 14,
-              color: textMedium,
-              fontStyle: FontStyle.italic,
-            ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text("Date : $date"),
+                ],
+              ),
+              SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.access_time, size: 16, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text("Heure : $heure"),
+                ],
+              ),
+              SizedBox(height: 8),
+              _buildNoteWidget(evaluation['note']),
+            ],
           ),
-
-        SizedBox(height: 8),
-
-
-        Row(
-          children: [
-            Icon(Icons.calendar_today, size: 16, color: textMedium),
-            SizedBox(width: 6),
-            Text(
-              evaluation['date'] ?? 'Date non spécifiée',
-              style: TextStyle(
-                fontSize: 14,
-                color: textMedium,
-              ),
-            ),
-            SizedBox(width: 10),
-            Icon(Icons.access_time, size: 16, color: textMedium),
-            SizedBox(width: 6),
-            Text(
-              evaluation['heure'] ?? 'Heure non spécifiée',
-              style: TextStyle(
-                fontSize: 14,
-                color: textMedium,
-              ),
-            ),
-          ],
         ),
-      ],
+      ),
     );
   }
+
+  @override
+  /*
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.disciplineName),
+        backgroundColor: Color(0xFF4666DB),
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Évaluations en ${widget.disciplineName}",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF4666DB),
+              ),
+            ),
+            SizedBox(height: 16),
+
+            if (isLoading)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        color: Color(0xFF4666DB),
+                      ),
+                      SizedBox(height: 16),
+                      Text("Chargement des évaluations..."),
+                    ],
+                  ),
+                ),
+              )
+            else if (errorMessage != null)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.red,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        "Erreur lors du chargement",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadEvaluations,
+                        child: Text("Réessayer"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF4666DB),
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (evaluations.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.assignment_outlined,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 16),
+                        const Text(
+                          "Aucune évaluation trouvée",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          "Il n'y a pas encore d'évaluation pour cette matière.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _loadEvaluations,
+                    child: ListView.builder(
+                      itemCount: evaluations.length,
+                      itemBuilder: (context, index) {
+                        return _buildEvaluationCard(evaluations[index]);
+                      },
+                    ),
+                  ),
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+
+   */
+
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.disciplineName),
+        backgroundColor: Color(0xFF4666DB),
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Évaluations en ${widget.disciplineName}",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16),
+            if (isLoading)
+              Center(child: CircularProgressIndicator())
+            else if (evaluations.isEmpty)
+              const Expanded(
+                child: Center(
+                  child: Text(
+                    "Aucune évaluation trouvée pour cette discipline.",
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey
+                    ),
+
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.builder(
+                  itemCount: evaluations.length,
+                  itemBuilder: (context, index) {
+                    final eval = evaluations[index];
+                    final type = eval['nom'];
+                    final note = eval['note'];
+                    final date = eval['date'];
+                    final heure = eval['heure'];
+
+                    return Card(
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      margin: EdgeInsets.symmetric(vertical: 8),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        leading: Icon(
+                          Icons.assignment,
+                          color: Color(0xFF4666DB),
+                        ),
+                        title: Text(
+                          type ?? "Évaluation non définie",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Date : ${DateFormat('dd/MM/yyyy').format(DateTime.parse(date))}"),
+                              SizedBox(height: 4),
+                              Text("Heure : $heure"),
+                              SizedBox(height: 4),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: note != null &&
+                                      note != "Aucune note disponible"
+                                      ? Colors.green.shade100
+                                      : Colors.red.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  note != null &&
+                                      note != "Aucune note disponible"
+                                      ? "Note : $note/20"
+                                      : "Note : Aucune note disponible",
+                                  style: TextStyle(
+                                    color: note != null &&
+                                        note != "Aucune note disponible"
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
 }

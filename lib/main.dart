@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'views/auth/login_page.dart';
 import 'views/dashboard.dart';
 
@@ -18,7 +19,24 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+
+    return ScreenUtilInit(
+      designSize: Size(393, 851),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Planète Élève',
+          theme: ThemeData(primarySwatch: Colors.blue),
+          home: const LoginPage(),
+          routes: {
+            "/dashboard": (context) => DashboardScreen(),
+          },
+        );
+      },
+    );
+ /*   return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Planete Eleve',
       theme: ThemeData(
@@ -28,6 +46,6 @@ class MyApp extends StatelessWidget {
       routes: {
         "/dashboard": (context) => DashboardScreen(),
       },
-    );
+    );*/
   }
 }

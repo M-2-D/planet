@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
 import '../../views/dashboard.dart';
@@ -17,7 +18,6 @@ class _EmploiDuTempsPageState extends State<EmploiDuTempsPage> {
   DateTime currentDate = DateTime.now();
   final DateFormat apiDateFormat = DateFormat('EEE, dd MMM, yyyy', 'fr_FR');
   final DateFormat displayDateFormat = DateFormat('EEE, dd MMM yyyy', 'fr_FR');
-
 
   final Color primaryColor = Color(0xFF4666DB);
   final Color amberColor = Color(0xFFFFC107);
@@ -90,17 +90,17 @@ class _EmploiDuTempsPageState extends State<EmploiDuTempsPage> {
 
   Widget _buildCoursItem(Map<String, dynamic> cours) {
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
-      padding: EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: Colors.grey[200]!),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: Offset(0, 2),
+            blurRadius: 6.w,
+            offset: Offset(0, 2.h),
           ),
         ],
       ),
@@ -110,62 +110,58 @@ class _EmploiDuTempsPageState extends State<EmploiDuTempsPage> {
           Text(
             (cours['discipline'] ?? 'Non définie').toString().toUpperCase(),
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 15.sp,
               fontWeight: FontWeight.bold,
               color: primaryColor,
             ),
           ),
-
-          SizedBox(height: 12),
-
+          SizedBox(height: 10.h),
           Row(
             children: [
-              Icon(Icons.access_time, size: 18, color: amberColor),
-              SizedBox(width: 8),
+              Icon(Icons.access_time, size: 16.sp, color: amberColor),
+              SizedBox(width: 6.w),
               Text(
                 cours['heure']?.replaceAll('-', ' - ') ?? '--:--',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13.sp,
                   color: textDark,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-
-          SizedBox(height: 12),
-
+          SizedBox(height: 8.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
                 child: Row(
                   children: [
-                    Icon(Icons.person_outline, size: 18, color: amberColor),
-                    SizedBox(width: 8),
-                    Text(
-                      cours['professeur'] ?? 'Non défini',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: textDark,
+                    Icon(Icons.person_outline, size: 16.sp, color: amberColor),
+                    SizedBox(width: 6.w),
+                    Flexible(
+                      child: Text(
+                        cours['professeur'] ?? 'Non défini',
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: textDark,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-
-              SizedBox(width: 16),
-
+              SizedBox(width: 12.w),
               Expanded(
                 child: Row(
                   children: [
-                    Icon(Icons.place_outlined, size: 18, color: amberColor),
-                    SizedBox(width: 8),
+                    Icon(Icons.place_outlined, size: 16.sp, color: amberColor),
+                    SizedBox(width: 6.w),
                     Text(
                       'Salle ${cours['salle']?.toString().replaceAll('Salle ', '') ?? 'Non définie'}',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.sp,
                         color: textDark,
                       ),
                     ),
@@ -181,6 +177,9 @@ class _EmploiDuTempsPageState extends State<EmploiDuTempsPage> {
 
   @override
   Widget build(BuildContext context) {
+    // INITIALISATION IMPORTANTE
+    ScreenUtil.init(context, designSize: Size(393, 851));
+
     final currentDateFormatted = apiDateFormat.format(currentDate);
     final filteredCours = emploiDuTemps.where((cours) {
       final coursDate = cours['date']?.toString() ?? '';
@@ -193,196 +192,212 @@ class _EmploiDuTempsPageState extends State<EmploiDuTempsPage> {
         backgroundColor: primaryColor,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Image.asset(
-          'assets/planet.png',
-          height: 40,
-          fit: BoxFit.contain,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
-       // centerTitle: true,
+        title: ColorFiltered(
+          colorFilter: ColorFilter.mode(
+            Colors.white.withOpacity(0.8),
+            BlendMode.modulate,
+          ),
+          child: Image.asset(
+            'assets/logo_white_eleve.png',
+            height: 32.h,
+            fit: BoxFit.contain,
+          ),
+        ),
+        centerTitle: true,
         actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: Icon(Icons.menu, color: Colors.white),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            ),
+          IconButton(
+            icon: Icon(Icons.notifications_outlined,
+                color: Colors.white,
+                size: 24.sp),
+            onPressed: () {
+              print('Notifications pressed');
+            },
           ),
         ],
       ),
       drawer: MenuDrawer(primaryColor: primaryColor),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 12),
-              color: Colors.white,
-              child: Text(
-                'ETABLISSEMENT SIMEN FORMATION (2024-2025)',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: textMedium,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: Colors.white,
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: amberColor.withOpacity(0.2),
-                    radius: 20,
-                    child: Icon(Icons.person, color: amberColor, size: 24),
-                  ),
-                  SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${userInfo["prenom"] ?? ""} ${userInfo["nom"] ?? ""} / ${userInfo["classe"] ?? "Classe ?"}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: textDark,
-                        ),
-                      ),
-                      Text(
-                        '${userInfo["ien"] ?? ""}',
-                        style: TextStyle(
-                          color: textMedium,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-           /* Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 12),
-              color: Colors.white,
-              child: Text(
-                'Classe: ${userInfo["classe"] ?? 'Non définie'}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  color: textDark,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),*/
-
-            SizedBox(height: 12),
-
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 16),
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.calendar_today, color: primaryColor, size: 24),
-                      SizedBox(width: 8),
-                      Text(
-                        'EMPLOI DU TEMPS',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 16),
-
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFF0F4FF),
-                      borderRadius: BorderRadius.circular(20),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              children: [
+                // Header établissement
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 8.h),
+                  color: Colors.white,
+                  child: Text(
+                    'ETABLISSEMENT SIMEN FORMATION (2024-2025)',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
+                      color: textMedium,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.chevron_left, color: primaryColor),
-                          onPressed: () => _changeDate(-1),
-                        ),
-                        Expanded(
-                          child: Text(
-                            displayDateFormat.format(currentDate),
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: textDark,
-                            ),
-                            textAlign: TextAlign.center,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                // Section utilisateur
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  color: Colors.white,
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: amberColor.withOpacity(0.2),
+                        radius: 18.r,
+                        child: Icon(Icons.person, color: amberColor, size: 22.sp),
+                      ),
+                      SizedBox(width: 10.w),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                '${userInfo["prenom"] ??""} ${userInfo["nom"] ?? ""}',
+                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15.sp, color: textDark),
+                              ),
+                              SizedBox(width: 4.w),
+                              Icon(Icons.chevron_right,
+                                  size: 18.sp,
+                                  color: textMedium
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                '${userInfo["classe"] ?? "Classe ?"}',
+                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15.sp, color: textDark),
+                              ),
+                            ],
                           ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.chevron_right, color: primaryColor),
-                          onPressed: () => _changeDate(1),
-                        ),
-                      ],
-                    ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            '${userInfo["ien"] ?? ""}',
+                            style: TextStyle(
+                              color: textMedium,
+                              fontSize: 13.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-
-                  SizedBox(height: 16),
-
-                  if (filteredCours.isEmpty)
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Text(
-                        'Aucun cours prévu pour ce jour',
-                        style: TextStyle(
-                          color: textLight,
-                          fontSize: 16,
+                ),
+                SizedBox(height: 8.h),
+                // Container principal
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 16.w),
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 6.w,
+                        offset: Offset(0, 2.h),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Header "EMPLOI DU TEMPS"
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.calendar_today, color: primaryColor, size: 22.sp),
+                          SizedBox(width: 8.w),
+                          Text(
+                            'EMPLOI DU TEMPS',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+                      // Navigation date
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 6.h, horizontal: 12.w),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF0F4FF),
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.chevron_left, color: primaryColor, size: 20.sp),
+                              onPressed: () => _changeDate(-1),
+                              padding: EdgeInsets.all(4.w),
+                              constraints: BoxConstraints(minWidth: 32.w, minHeight: 32.h),
+                            ),
+                            Expanded(
+                              child: Text(
+                                displayDateFormat.format(currentDate),
+                                style: TextStyle(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: textDark,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.chevron_right, color: primaryColor, size: 20.sp),
+                              onPressed: () => _changeDate(1),
+                              padding: EdgeInsets.all(4.w),
+                              constraints: BoxConstraints(minWidth: 32.w, minHeight: 32.h),
+                            ),
+                          ],
                         ),
                       ),
-                    )
-                  else
-                    Column(
-                      children: filteredCours
-                          .map((cours) => _buildCoursItem(cours))
-                          .toList(),
-                    ),
-                ],
-              ),
+                      SizedBox(height: 12.h),
+                      if (filteredCours.isEmpty)
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
+                          child: Text(
+                            'Aucun cours prévu pour ce jour',
+                            style: TextStyle(
+                              color: textLight,
+                              fontSize: 15.sp,
+                            ),
+                          ),
+                        )
+                      else
+                        Column(
+                          children: filteredCours
+                              .map((cours) => _buildCoursItem(cours))
+                              .toList(),
+                        ),
+                      SizedBox(height: 60.h),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: primaryColor,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+            topLeft: Radius.circular(20.r),
+            topRight: Radius.circular(20.r),
           ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, -2),
+              blurRadius: 10.w,
+              offset: Offset(0, -2.h),
             ),
           ],
         ),
@@ -390,7 +405,7 @@ class _EmploiDuTempsPageState extends State<EmploiDuTempsPage> {
         child: BottomNavigationBar(
           items: [
             BottomNavigationBarItem(
-              icon: Icon( Icons.dashboard),
+              icon: Icon(Icons.dashboard),
               label: '',
             ),
             BottomNavigationBarItem(

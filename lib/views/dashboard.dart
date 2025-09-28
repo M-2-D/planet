@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
 import '../../views/emploi_du_temps.dart';
@@ -8,8 +9,23 @@ import '../../views/menu_drawer.dart';
 extension StringExtension on String {
   String capitalize() {
     if (isEmpty) return this;
-    return "${this[0].toUpperCase()}${this.substring(1).toLowerCase()}";
+    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
   }
+}
+
+// Modèle pour les statistiques
+class StatItemModel {
+  final String label;
+  final int value;
+  final IconData icon;
+  final Color color;
+
+  StatItemModel({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 }
 
 class DashboardScreen extends StatefulWidget {
@@ -21,14 +37,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<dynamic> plannings = [];
   Map<String, dynamic> userInfo = {};
   bool isLoading = true;
+  bool _isPressed = false;
+
   String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-  // Nouvelles variables pour les statistiques
+  // Données statistiques
   int totalAbsences = 0;
   int totalRetards = 0;
   int totalEvaluations = 0;
   bool isLoadingStats = false;
 
+  // Couleurs globales
   final Color primaryColor = Color(0xFF4666DB);
   final Color amberColor = Color(0xFFFFC107);
   final Color blueColor = Color(0xFF2599FB);
@@ -59,8 +78,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         plannings = planningData ?? [];
         isLoading = false;
       });
-
-      // Charger les statistiques en parallèle
       _loadStatistics();
     } catch (e) {
       setState(() => isLoading = false);
@@ -75,26 +92,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final ien = userInfo['ien'];
       if (ien != null) {
-        // Simuler le chargement des statistiques
-        // À remplacer par vos vraies méthodes API
         final evaluations = await ApiService.getEvaluations(ien);
-
         setState(() {
           totalEvaluations = evaluations.length;
-          // Vous devrez ajouter ces méthodes dans votre ApiService
-          // totalAbsences = await ApiService.getAbsences(ien);
-          // totalRetards = await ApiService.getRetards(ien);
-
-          // Valeurs temporaires pour la démonstration
-          totalAbsences = 3; // À remplacer par l'API réelle
-          totalRetards = 1;  // À remplacer par l'API réelle
-
+          totalAbsences = 3; // À remplacer par API réelle
+          totalRetards = 1;  // À remplacer par API réelle
           isLoadingStats = false;
         });
       }
     } catch (e) {
       setState(() => isLoadingStats = false);
-      print('Erreur chargement statistiques: $e');
+      print('Erreur lors du chargement des statistiques : $e');
     }
   }
 
@@ -108,34 +116,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final times = hourRange.split('-');
       if (times.length != 2) return false;
-
       final now = DateTime.now();
       final currentTime = TimeOfDay.fromDateTime(now);
-
-      // Parse start time
       final startTimeParts = times[0].trim().split(':');
       final startHour = int.parse(startTimeParts[0]);
       final startMinute = int.parse(startTimeParts[1]);
-
-      // Parse end time
       final endTimeParts = times[1].trim().split(':');
       final endHour = int.parse(endTimeParts[0]);
       final endMinute = int.parse(endTimeParts[1]);
 
-      // Convert to minutes for easier comparison
       final currentMinutes = currentTime.hour * 60 + currentTime.minute;
       final startMinutes = startHour * 60 + startMinute;
       final endMinutes = endHour * 60 + endMinute;
 
       return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
     } catch (e) {
-      print('Error parsing time: $e');
+      print('Erreur lors du parsing de l\'heure : $e');
       return false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // INITIALISATION IMPORTANTE POUR LA RESPONSIVITÉ
+    ScreenUtil.init(context, designSize: Size(393, 851));
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: _buildAppBar(),
@@ -150,25 +155,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: primaryColor,
       elevation: 0,
       automaticallyImplyLeading: false,
-      title: Image.asset(
-        'assets/planet.png',
-        height: 40,
-        fit: BoxFit.contain,
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: Icon(Icons.menu, color: Colors.white),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
       ),
+      title: ColorFiltered(
+        colorFilter: ColorFilter.mode(
+          Colors.white.withOpacity(0.8),
+          BlendMode.modulate,
+        ),
+        child: Image.asset(
+          'assets/logo_white_eleve.png',
+          height: 32.h,
+          fit: BoxFit.contain,
+        ),
+      ),
+      centerTitle: true,
       actions: [
-        Builder(
-          builder: (context) => IconButton(
-            icon: Icon(Icons.menu, color: Colors.white),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
+        IconButton(
+          icon: Icon(Icons.notifications_outlined,
+              color: Colors.white,
+              size: 24.sp),
+          onPressed: () {
+            print('Notifications pressed');
+          },
         ),
       ],
     );
   }
 
-  Widget _buildLoader() {
-    return Center(child: CircularProgressIndicator());
-  }
+  Widget _buildLoader() => Center(child: CircularProgressIndicator());
 
   Widget _buildContent() {
     return SingleChildScrollView(
@@ -176,11 +194,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           _buildSchoolHeader(),
           _buildStudentInfo(),
-          SizedBox(height: 12),
+          SizedBox(height: 8.h),
           _buildDailySchedule(),
-          SizedBox(height: 16),
-          _buildStatisticsSection(), // Remplace _buildEvaluationsSection()
-          SizedBox(height: 16),
+          SizedBox(height: 12.h),
+          _buildStatisticsSection(),
+          SizedBox(height: 12.h),
         ],
       ),
     );
@@ -189,14 +207,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildSchoolHeader() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(vertical: 12),
+      padding: EdgeInsets.symmetric(vertical: 8.h),
       color: Colors.white,
       child: Text(
         'ETABLISSEMENT SIMEN FORMATION (2024-2025)',
         style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: textMedium,
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w500,
+            color: textMedium
         ),
         textAlign: TextAlign.center,
       ),
@@ -205,33 +223,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildStudentInfo() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(
+          horizontal: 16.w,
+          vertical: 8.h
+      ),
       color: Colors.white,
       child: Row(
         children: [
           CircleAvatar(
             backgroundColor: amberColor.withOpacity(0.2),
-            radius: 20,
-            child: Icon(Icons.person, color: amberColor, size: 24),
+            radius: 18.r,
+            child: Icon(Icons.person,
+                color: amberColor,
+                size: 22.sp),
           ),
-          SizedBox(width: 12),
+          SizedBox(width: 10.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${userInfo["prenom"] ?? ""} ${userInfo["nom"] ?? ""} / ${userInfo["classe"] ?? "Classe ?"}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: textDark,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      '${userInfo["prenom"] ??""} ${userInfo["nom"] ?? ""}',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15.sp,
+                          color: textDark
+                      ),
+                    ),
+                    SizedBox(width: 4.w),
+                    Icon(Icons.chevron_right,
+                        size: 18.sp,
+                        color: textMedium
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      '${userInfo["classe"] ?? "Classe ?"}',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15.sp,
+                          color: textDark
+                      ),
+                    ),
+                  ],
                 ),
                 Text(
                   '${userInfo["ien"] ?? ""}',
                   style: TextStyle(
-                    color: textMedium,
-                    fontSize: 14,
+                      color: textMedium,
+                      fontSize: 13.sp
                   ),
                 ),
               ],
@@ -244,17 +285,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildDailySchedule() {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16),
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
+        borderRadius: BorderRadius.circular(8.r),
+        boxShadow: [BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
+            blurRadius: 6.w,
+            offset: Offset(0, 2.h)
+        )],
       ),
       child: Column(
         children: [
@@ -269,42 +308,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildSectionHeader(IconData icon, String title) {
     final now = DateTime.now();
     final formattedDate = DateFormat('EE, dd MMM yyyy', 'fr_FR').format(now);
-
     return Column(
       children: [
         Container(
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: 8.h),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: primaryColor, size: 20),
-              SizedBox(width: 8),
+              Icon(icon,
+                  color: primaryColor,
+                  size: 20.sp),
+              SizedBox(width: 8.w),
               Text(
                 title,
                 style: TextStyle(
-                  color: primaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                    color: primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15.sp
                 ),
               ),
             ],
           ),
         ),
-        if (title == 'PLANNING DU JOUR')
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              formattedDate,
-              style: TextStyle(
-                fontSize: 16,
-                color: textMedium,
-              ),
+        Padding(
+          padding: EdgeInsets.only(bottom: 6.h),
+          child: Text(
+            formattedDate,
+            style: TextStyle(
+                fontSize: 14.sp,
+                color: textMedium
             ),
           ),
-        Container(
-          height: 1,
-          color: Colors.grey[200],
         ),
+        Container(height: 1.h, color: Colors.grey[200]),
       ],
     );
   }
@@ -312,7 +348,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildCoursesList() {
     if (plannings.isEmpty) {
       return Padding(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(12.w),
         child: Text(
           'Aucun cours prévu pour aujourd\'hui.',
           style: TextStyle(color: textMedium),
@@ -322,36 +358,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Column(
-        children: plannings.map<Widget>((planning) {
+        children: plannings.asMap().entries.map((entry) {
+          int index = entry.key;
+          var planning = entry.value;
           final bool isCurrentCourse = _isCurrentCourse(planning['heure'] ?? '');
 
           return Container(
-            margin: EdgeInsets.only(top: 16),
+            margin: EdgeInsets.only(
+                top: index == 0 ? 12.h : 8.h
+            ),
             decoration: BoxDecoration(
               gradient: isCurrentCourse
                   ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [ blueColor,currentCourseEndColor],
-              )
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [blueColor, currentCourseEndColor])
                   : null,
               color: isCurrentCourse ? null : Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(12.r),
               boxShadow: [
                 BoxShadow(
                   color: isCurrentCourse
                       ? primaryColor.withOpacity(0.3)
                       : Colors.black.withOpacity(0.05),
-                  blurRadius: isCurrentCourse ? 10 : 6,
-                  offset: Offset(0, 2),
-                  spreadRadius: isCurrentCourse ? 1 : 0,
-                ),
+                  blurRadius: isCurrentCourse ? 10.w : 6.w,
+                  offset: Offset(0, 2.h),
+                  spreadRadius: isCurrentCourse ? 1.w : 0,
+                )
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(14.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -362,7 +401,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Text(
                           (planning['discipline'] ?? 'Non définie').toString().toUpperCase(),
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15.sp,
                             fontWeight: FontWeight.bold,
                             color: isCurrentCourse ? Colors.white : primaryColor,
                           ),
@@ -370,26 +409,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       if (isCurrentCourse)
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 3.h
+                          ),
                           decoration: BoxDecoration(
                             color: currentCourseBadgeColor,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.play_arrow,
-                                color: Colors.white,
-                                size: 14,
-                              ),
-                              SizedBox(width: 4),
+                              Icon(Icons.play_arrow,
+                                  color: Colors.white,
+                                  size: 14.sp),
+                              SizedBox(width: 4.w),
                               Text(
                                 'EN COURS',
                                 style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.bold
                                 ),
                               ),
                             ],
@@ -397,43 +437,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                     ],
                   ),
-                  SizedBox(height: 12),
+                  SizedBox(height: 10.h),
                   Row(
                     children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 18,
-                        color: isCurrentCourse ? Colors.white70 : amberColor,
-                      ),
-                      SizedBox(width: 8),
+                      Icon(Icons.access_time,
+                          size: 16.sp,
+                          color: isCurrentCourse ? Colors.white70 : amberColor),
+                      SizedBox(width: 6.w),
                       Text(
                         planning['heure']?.replaceAll('-', ' - ') ?? '--:--',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13.sp,
                           color: isCurrentCourse ? Colors.white : textDark,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 12),
+                  SizedBox(height: 8.h),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.person_outline,
-                              size: 18,
-                              color: isCurrentCourse ? Colors.white70 : amberColor,
-                            ),
-                            SizedBox(width: 8),
+                            Icon(Icons.person_outline,
+                                size: 16.sp,
+                                color: isCurrentCourse ? Colors.white70 : amberColor),
+                            SizedBox(width: 6.w),
                             Expanded(
                               child: Text(
                                 planning['professeur'] ?? 'Non défini',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 13.sp,
                                   color: isCurrentCourse ? Colors.white : textDark,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -442,20 +478,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ],
                         ),
                       ),
-                      SizedBox(width: 16),
+                      SizedBox(width: 12.w),
                       Expanded(
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.place_outlined,
-                              size: 18,
-                              color: isCurrentCourse ? Colors.white70 : amberColor,
-                            ),
-                            SizedBox(width: 8),
+                            Icon(Icons.place_outlined,
+                                size: 16.sp,
+                                color: isCurrentCourse ? Colors.white70 : amberColor),
+                            SizedBox(width: 6.w),
                             Text(
                               'Salle ${planning['salle']?.toString().replaceAll('Salle ', '') ?? 'Non définie'}',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13.sp,
                                 color: isCurrentCourse ? Colors.white : textDark,
                               ),
                             ),
@@ -475,7 +509,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildScheduleLink() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: EdgeInsets.symmetric(
+          horizontal: 16.w,
+          vertical: 12.h
+      ),
       child: Align(
         alignment: Alignment.centerRight,
         child: GestureDetector(
@@ -492,7 +529,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   text: "Emploi du temps",
                   style: TextStyle(
                     color: primaryColor,
-                    fontSize: 14,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
                     decoration: TextDecoration.none,
                     decorationThickness: 1.0,
@@ -503,7 +540,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   text: " >",
                   style: TextStyle(
                     color: primaryColor,
-                    fontSize: 14,
+                    fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -515,165 +552,166 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // NOUVELLE SECTION : Widgets statistiques
   Widget _buildStatisticsSection() {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
+      margin: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Row(
         children: [
-          Row(
-            children: [
-              // Widget Absences et Retards
-              Expanded(
-                child: _buildStatCard(
-                  'ABSENCES & RETARDS',
-                  Icons.warning_amber_rounded,
-                  redColor,
-                  isLoadingStats,
-                  children: [
-                    _buildStatItem('Absences', totalAbsences, Icons.cancel, redColor),
-                    SizedBox(height: 8),
-                    _buildStatItem('Retards', totalRetards, Icons.schedule, orangeColor),
-                  ],
-                  onTap: () {
-                    // Navigation vers la page des absences/retards
-                    // Navigator.push(context, MaterialPageRoute(builder: (context) => AbsencesPage()));
-                  },
-                ),
-              ),
-              SizedBox(width: 16),
-              // Widget Évaluations
-              Expanded(
-                child: _buildStatCard(
-                  'ÉVALUATIONS',
-                  Icons.assessment,
-                  greenColor,
-                  isLoadingStats,
-                  children: [
-                    _buildStatItem('Total', totalEvaluations, Icons.quiz, greenColor),
-                    SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => DisciplineListPage(semester: 1)),
-                        );
-                      },
-                      child: Row(
-                        children: [
-                          Icon(Icons.visibility, size: 16, color: primaryColor),
-                          SizedBox(width: 4),
-                          Text(
-                            'Voir détails',
-                            style: TextStyle(
-                              color: primaryColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              decoration: TextDecoration.underline,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          // --- Widget Absences & Retards ---
+          Expanded(
+            child: _buildImprovedStatCard(
+              title: 'ABSENCES',
+              iconData: Icons.warning_amber_rounded,
+              gradientColors: [Color(0xFFE53E3E), Color(0xFFFA7D7D)],
+              items: [
+                StatItemModel(label: 'Abs', value: totalAbsences, icon: Icons.cancel, color: Colors.white),
+                StatItemModel(label: 'Rtrd', value: totalRetards, icon: Icons.schedule, color: Colors.white),
+              ],
+              onTap: () {},
+            ),
+          ),
+          SizedBox(width: 16.w),
+          // --- Widget Évaluations ---
+          Expanded(
+            child: _buildImprovedStatCard(
+              title: 'ÉVALUATIONS',
+              iconData: Icons.assessment,
+              gradientColors: [Color(0xFF4299E1), Color(0xFF90CDF4)],
+              items: [
+                StatItemModel(
+                    label: 'Total', value: totalEvaluations, icon: Icons.quiz, color: Color(0xFF006699)),
+              ],
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => DisciplineListPage(semester: 1)),
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(
-      String title,
-      IconData icon,
-      Color color,
-      bool isLoading, {
-        List<Widget>? children,
-        VoidCallback? onTap,
-      }) {
+  Widget _buildImprovedStatCard({
+    required String title,
+    required IconData iconData,
+    required List<Color> gradientColors,
+    required List<StatItemModel> items,
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: Offset(0, 2),
+      child: AnimatedScale(
+        duration: Duration(milliseconds: 150),
+        scale: (_isPressed && onTap != null) ? 0.98 : 1.0,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10.w,
+                offset: Offset(0, 4.h),
+              ),
+            ],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: gradientColors,
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(10.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Icon(iconData, color: Colors.white, size: 20.sp),
                     ),
-                    child: Icon(icon, color: color, size: 20),
-                  ),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: textDark,
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                  ],
+                ),
+                SizedBox(height: 16.h),
+                if (items.length == 1)
+                  Row(
+                    children: [
+                      Icon(items[0].icon, size: 18.sp, color: items[0].color),
+                      SizedBox(width: 10.w),
+                      Text(
+                        '${items[0].label}: ${items[0].value}',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
+                  )
+                else if (items.length >= 2)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(items[0].icon, size: 18.sp, color: items[0].color),
+                            SizedBox(width: 8.w),
+                            Text(
+                              '${items[0].label}: ${items[0].value}',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Flexible(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(items[1].icon, size: 18.sp, color: items[1].color),
+                            SizedBox(width: 8.w),
+                            Text(
+                              '${items[1].label}: ${items[1].value}',
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              SizedBox(height: 16),
-              if (isLoading)
-                Center(
-                  child: SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              else if (children != null)
-                ...children,
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatItem(String label, int value, IconData icon, Color color) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: color),
-        SizedBox(width: 8),
-        Text(
-          '$label: ',
-          style: TextStyle(
-            fontSize: 14,
-            color: textMedium,
-          ),
-        ),
-        Text(
-          '$value',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-      ],
     );
   }
 
@@ -682,36 +720,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       decoration: BoxDecoration(
         color: primaryColor,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+          topLeft: Radius.circular(20.r), // ✅ CORRIGÉ
+          topRight: Radius.circular(20.r), // ✅ CORRIGÉ
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, -2),
+            blurRadius: 10.w, // ✅ CORRIGÉ
+            offset: Offset(0, -2.h), // ✅ CORRIGÉ
           ),
         ],
       ),
       margin: EdgeInsets.zero,
       child: BottomNavigationBar(
         items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assessment),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: '',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.assessment), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
         ],
         currentIndex: 0,
         selectedItemColor: Colors.white,
